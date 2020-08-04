@@ -1,0 +1,138 @@
+swagger: "2.0"
+info:
+  description: Swagger Definition for Recipes
+  version: "1.0.0"
+  title: Swagger Definition for Recipes
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /api
+
+paths:
+  /recipe:
+    get:
+      operationId: recipe.get_all
+      tags:
+        - Recipe
+      summary: Get all the recipes
+      description: Get all the recipes
+      parameters:
+        - name: length
+          in: query
+          type: integer
+          description: Number of recipes to get
+          required: false
+        - name: offset
+          in: query
+          type: integer
+          description: Offset from beginning of list where to start gathering recipes
+          required: false
+      responses:
+        200:
+          description: Successfully get recipes
+          schema:
+            type: array
+            items:
+              properties:
+                fname:
+                  type: string
+                lname:
+                  type: string
+                timestamp:
+                  type: string
+
+    post:
+      operationId: recipe.create
+      tags:
+        - Recipe
+      summary: Create a recipe and add it to the recipe list
+      description: Create a new recipe in the recipe list
+      parameters:
+        - name: recipe
+          in: body
+          description: recipe to create
+          required: True
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Id of the recipe
+              recipeTitle:
+                type: string
+                description: Title of the recipe
+              recipeIngredients:
+                type: string
+                description: List of ingredients of the recipe
+      responses:
+        201:
+          description: Successfully created a recipe
+
+  /recipe/{id}:
+    get:
+      operationId: recipe.get_one
+      tags:
+        - Recipe
+      summary: Get a recipe
+      description: Get a recipe
+      parameters:
+        - name: id
+          in: path
+          description: Id of the recipe to retrieve
+          type: integer
+          required: True
+      responses:
+        200:
+          description: Successfully get a recipe for a given id
+          schema:
+            properties:
+              recipeId:
+                type: integer
+              recipeTitle:
+                type: string
+              recipeIngredients:
+                type: string
+
+    put:
+      operationId: recipe.update
+      tags:
+        - Recipe
+      summary: Update a recipe
+      description: Update a recipe
+      parameters:
+        - name: id
+          in: path
+          description: Id of the recipe to update
+          type: integer
+          required: True
+        - name: recipe
+          in: body
+          schema:
+            type: object
+            properties:
+              recipeId:
+                type: integer
+              recipeTitle:
+                type: string
+              recipeIngredients:
+                type: string
+      responses:
+        200:
+          description: Successfully updated a recipe
+
+    delete:
+      operationId: recipe.delete
+      tags:
+        - Recipe
+      summary: Delete a recipe
+      description: Delete a recipe
+      parameters:
+        - name: id
+          in: path
+          type: integer
+          required: True
+      responses:
+        200:
+          description: Successfully deleted a recipe
