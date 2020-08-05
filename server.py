@@ -1,16 +1,17 @@
 from flask import render_template
-import connexion
+import config
 
-app = connexion.App(__name__, specification_dir='./')
-app.add_api('swagger.yml')
+connex_app = config.connex_app
+connex_app.add_api("swagger.yml")
 
-@app.route('/')
+@connex_app.route("/")
 def home():
     """
-    Returns home
-    :return:        the rendered template
+    This function just responds to the browser URL
+    localhost:5000/
+    :return:        the rendered template "home.html"
     """
-    return render_template('index.html')
+    return render_template("index.html")
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    connex_app.run(debug=True)

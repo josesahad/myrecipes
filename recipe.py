@@ -2,20 +2,8 @@
 Recipe module
 """
 from flask import make_response, abort
-
-# Testing data
-RECIPE = {
-    1: {
-        "id": 1,
-        "recipeTitle": "Ravioles con Tuco",
-        "recipeIngredients": "Ravioles, Tuco"
-    },
-    2: {
-        "id": 2,
-        "recipeTitle": "Fideos con Bolognesa",
-        "recipeIngredients": "Fideos, Tuco, Carne"
-    },
-}
+from config import db
+from models import Recipe, RecipeSchema
 
 
 def get_all():
@@ -24,26 +12,26 @@ def get_all():
 
     :return:        List of recipes
     """
-    return [RECIPE[key] for key in sorted(RECIPE.keys())]
+    recipe = Recipe.query.order_by(Recipe.recipe_id).all()
+    return RecipeSchema(many=True).dump(recipe)
 
 
-def get_one(recipeId):
+def get_one(recipe_id):
     """
     Retrieves a recipe
 
     :param id:      id of the recipe
     :return:        Recipe for the given id
     """
-    if recipeId in RECIPE:
-        recipe = RECIPE.get(recipeId)
+    recipe = Recipe.query.filter(Recipe.recipe_id == recipe_id).one_or_none()
+
+    if recipe is not None:
+        return RecipeSchema().dump(recipe)
 
     else:
         abort(
-            404, "Recipe {recipeId} not found".format(recipeId=recipeId)
+            404, "Recipe {recipe_id} not found".format(recipe_id=recipe_id)
         )
-
-    return recipe
-
 
 def create(recipe):
     """
@@ -52,59 +40,86 @@ def create(recipe):
     :param recipe:  recipe to create
     :return:        201 on success
     """
-    recipeId = recipe.get("id", None)
-    recipeTitle = recipe.get("recipeTitle", None)
-    recipeIngredients = recipe.get("recipeIngredients", None)
+    title = recipe.get("recipeTitle")
+    ingredients = recipe.get("recipeIngredients")
 
-    if recipeId not in RECIPE and recipeId is not None:
-        RECIPE[recipeId] = {
-            "id": recipeId,
-            "recipeTitle": recipeTitle,
-            "recipeIngredients": recipeIngredients,
-        }
-        return RECIPE[recipeId], 201
+    recipe_in_db = (
+        Recipe.query.filter(Recipe.title == title).filter(Recipe.ingredients == ingredients).one_or_none()
+    )
+
+    if recipe_in_db is None:
+        schema = RecipeSchema()
+        new_recipe = schema.load(recipe, session=db.session)
+
+        db.session.add(new_recipe)
+        db.session.commit()
+
+        return schema.dump(new_recipe), 201
 
     else:
         abort(
             406,
-            "Recipe {recipeId} already exists".format(recipeId=recipeId),
+            "Recipe {title} already exists".format(title=title),
         )
 
 
-def update(recipeId, recipe):
+def update(recipe_id, recipe):
     """
     Updates a recipe
 
-    :param id:      recipe id
+    :param recipe_id:      recipe id
     :param recipe:  recipe to update
     :return:        updated recipe
     """
-    if recipeId in RECIPE:
-        RECIPE[recipeId]["recipeTitle"] = recipe.get("recipeTitle")
-        RECIPE[recipeId]["recipeIngredients"] = recipe.get("recipeIngredients")
+    title = recipe.get("recipeTitle")
+    ingredients = recipe.get("recipeIngredients")
 
-        return RECIPE[recipeId]
+    recipe_to_update = (
+        Recipe.query.filter(Recipe.recipe_id == recipe_id).one_or_none()
+    )
 
+    recipe_in_db = (
+        Recipe.query.filter(Recipe.title == title).filter(Recipe.ingredients == ingredients).one_or_none()
+    )
+
+    if recipe_to_update is None:
+        abort(
+            404, "Recipe {id} not found".format(id=recipe_id)
+        )
+
+    elif recipe_in_db is None:
+        schema = RecipeSchema()
+        recipe_update = schema.load(recipe, session=db.session)
+
+        recipe_update.recipe_id = recipe_to_update.recipe_id
+
+        db.session.merge(recipe_update)
+        db.session.commit()
+
+        return schema.dump(recipe_to_update), 200
     else:
         abort(
-            404, "Recipe {recipeId} not found".format(recipeId=recipeId)
+            406, "Recipe {title} already exists".format(title=title),
         )
 
 
-def delete(recipeId):
+def delete(recipe_id):
     """
     Deletes a recipe
 
-    :param id:      Id of the recipe
+    :param recipe_id:      Id of the recipe
     :return:        200 on successful delete
     """
-    if recipeId in RECIPE:
-        del RECIPE[recipeId]
+    recipe = Recipe.query.filter(Recipe.recipe_id == recipe_id).one_or_none()
+
+    if recipe is not None:
+        db.session.delete(recipe)
+        db.session.commit()
         return make_response(
-            "{recipeId} successfully deleted".format(recipeId=recipeId), 200
+            "Recipe {recipe_id} has been deleted".format(recipe_id=recipe_id), 200
         )
 
     else:
         abort(
-            404, "Recipe {recipeId} not found".format(recipeId=recipeId)
+            404, "Recipe {recipe_id} not found".format(recipe_id=recipe_id)
         )
