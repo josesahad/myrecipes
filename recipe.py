@@ -3,7 +3,9 @@ Recipe module
 """
 from flask import make_response, abort
 from config import db
-from models import Recipe, RecipeSchema
+from models import Recipe, RecipeSchema, IngredientSchema, Ingredient
+from sqlalchemy import engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 
 def get_all():
@@ -20,7 +22,7 @@ def get_one(recipe_id):
     """
     Retrieves a recipe
 
-    :param id:      id of the recipe
+    :param recipe_id:      id of the recipe
     :return:        Recipe for the given id
     """
     recipe = Recipe.query.filter(Recipe.recipe_id == recipe_id).one_or_none()
@@ -40,21 +42,21 @@ def create(recipe):
     :param recipe:  recipe to create
     :return:        201 on success
     """
-    title = recipe.get("recipeTitle")
-    ingredients = recipe.get("recipeIngredients")
+    title = recipe.get("title")
 
     recipe_in_db = (
-        Recipe.query.filter(Recipe.title == title).filter(Recipe.ingredients == ingredients).one_or_none()
+        Recipe.query.filter(Recipe.title == title).one_or_none()
     )
 
     if recipe_in_db is None:
-        schema = RecipeSchema()
-        new_recipe = schema.load(recipe, session=db.session)
-
+        recipe_schema = RecipeSchema()
+        session_s = scoped_session(sessionmaker(bind=engine))        
+        new_recipe = recipe_schema.load(recipe, session=session_s)
+        
         db.session.add(new_recipe)
         db.session.commit()
 
-        return schema.dump(new_recipe), 201
+        return recipe_schema.dump(new_recipe), 201
 
     else:
         abort(

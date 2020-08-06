@@ -11,7 +11,7 @@ produces:
 basePath: /api
 
 paths:
-  /recipe:
+  /recipes:
     get:
       operationId: recipe.get_all
       tags:
@@ -36,12 +36,25 @@ paths:
             type: array
             items:
               properties:
-                fname:
+                title:
                   type: string
-                lname:
-                  type: string
+                recipe_id:
+                  type: integer
                 timestamp:
                   type: string
+                ingredients:
+                  type: array
+                  items:
+                    properties:
+                      ingredient_id:
+                        type: integer
+                        description: Id of the ingredient
+                      content:
+                        type: string
+                        description: ingredient description
+                      timestamp:
+                        type: string
+                        description: Create/Update timestamp of this ingredient
 
     post:
       operationId: recipe.create
@@ -57,20 +70,30 @@ paths:
           schema:
             type: object
             properties:
-              id:
+              recipe_id:
                 type: integer
                 description: Id of the recipe
-              recipeTitle:
+              title:
                 type: string
                 description: Title of the recipe
-              recipeIngredients:
-                type: string
-                description: List of ingredients of the recipe
+              ingredients:
+                type: array
+                items:
+                  properties:
+                    ingredient_id:
+                      type: integer
+                      description: Id of the ingredient
+                    content:
+                      type: string
+                      description: ingredient description
+                    timestamp:
+                      type: string
+                      description: Create/Update timestamp of this ingredient
       responses:
         201:
           description: Successfully created a recipe
 
-  /recipe/{id}:
+  /recipes/{recipe_id}:
     get:
       operationId: recipe.get_one
       tags:
@@ -78,7 +101,7 @@ paths:
       summary: Get a recipe
       description: Get a recipe
       parameters:
-        - name: id
+        - name: recipe_id
           in: path
           description: Id of the recipe to retrieve
           type: integer
@@ -88,12 +111,23 @@ paths:
           description: Successfully get a recipe for a given id
           schema:
             properties:
-              recipeId:
+              recipe_id:
                 type: integer
-              recipeTitle:
+              title:
                 type: string
-              recipeIngredients:
-                type: string
+              ingredients:
+                type: array
+                items:
+                  properties:
+                    ingredient_id:
+                      type: integer
+                      description: Id of the ingredient
+                    content:
+                      type: string
+                      description: ingredient description
+                    timestamp:
+                      type: string
+                      description: Create/Update timestamp of this ingredient
 
     put:
       operationId: recipe.update
@@ -102,7 +136,7 @@ paths:
       summary: Update a recipe
       description: Update a recipe
       parameters:
-        - name: id
+        - name: recipe_id
           in: path
           description: Id of the recipe to update
           type: integer
@@ -112,11 +146,9 @@ paths:
           schema:
             type: object
             properties:
-              recipeId:
+              recipe_id:
                 type: integer
-              recipeTitle:
-                type: string
-              recipeIngredients:
+              title:
                 type: string
       responses:
         200:
@@ -129,10 +161,67 @@ paths:
       summary: Delete a recipe
       description: Delete a recipe
       parameters:
-        - name: id
+        - name: recipe_id
           in: path
           type: integer
           required: True
       responses:
         200:
           description: Successfully deleted a recipe
+    
+  /recipes/{recipe_id}/ingredients:
+    get:
+      operationId: ingredient.get_ingredients_by_recipe
+      tags:
+        - Ingredients
+      summary: Get all the ingredients for a recipe
+      description: Get all the ingredients for a recipe
+      parameters:
+        - name: recipe_id
+          in: path
+          type: integer
+          required: True
+        - name: length
+          in: query
+          type: integer
+          description: Number of ingredients to get
+          required: false
+        - name: offset
+          in: query
+          type: integer
+          description: Offset from beginning of list where to start gathering ingredients
+          required: false
+      responses:
+        200:
+          description: Successfully get ingredients for the recipe
+          schema:
+            type: array
+            items:
+              properties:
+                content:
+                  type: string
+                ingredient_id:
+                  type: string
+                timestamp:
+                  type: string
+
+  /recipes/{recipe_id}/ingredients/{ingredient_id}:
+    delete:
+      operationId: ingredient.delete
+      tags:
+        - Ingredients
+      summary: Delete an ingredient
+      description: Delete an ingredient
+      parameters:
+        - name: recipe_id
+          in: path
+          type: integer
+          required: True
+        - name: ingredient_id
+          in: path
+          type: integer
+          required: True
+      responses:
+        200:
+          description: Successfully deleted a recipe
+
